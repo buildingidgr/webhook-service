@@ -1,6 +1,7 @@
 import amqp from 'amqplib';
 import { config } from '../config';
 import { createLogger } from '../utils/logger';
+import { processEvent } from './eventProcessor';
 
 const logger = createLogger('queue-service');
 
@@ -27,14 +28,14 @@ export async function addToQueue(eventType: string, data: any) {
   }
 }
 
-export async function startQueueConsumer(processMessage: (eventType: string, data: any) => Promise<void>) {
+export async function setupQueueConsumer() {
   try {
     const ch = await getChannel();
     ch.consume(config.queueName, async (msg) => {
       if (msg) {
         const { eventType, data } = JSON.parse(msg.content.toString());
         try {
-          await processMessage(eventType, data);
+          await processEvent(eventType, data);
           ch.ack(msg);
         } catch (error) {
           logger.error(`Error processing message: ${eventType}`, error);

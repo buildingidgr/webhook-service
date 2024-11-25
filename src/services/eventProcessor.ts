@@ -22,8 +22,8 @@ async function handleUserCreated(payload: any) {
     const apiKey = await generateApiKey(userId);
     logger.info(`Generated API key for user: ${userId}`);
     // Here you would typically store the API key securely
-    // For this example, we'll just add it to the queue
-    await addToQueue('user.api_key.created', { userId, apiKey });
+    // For this example, we'll just log it
+    logger.info(`API key for user ${userId}: ${apiKey}`);
   } catch (error) {
     logger.error('Error handling user.created event:', error);
     throw error;

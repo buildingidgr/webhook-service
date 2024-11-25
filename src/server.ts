@@ -12,6 +12,9 @@ const app = express();
 const logger = createLogger('webhook-service');
 const port = process.env.PORT || 3000;
 
+// Trust proxy
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json({
   verify: (req: any, res, buf) => {

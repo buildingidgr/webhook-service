@@ -1,6 +1,6 @@
 import { createLogger } from '../utils/logger';
 import { generateApiKey } from './apiKeyService';
-import { addToQueue } from '../queue/bullQueue';
+import { addToQueue } from './queueService';
 
 const logger = createLogger('event-processor');
 
@@ -11,7 +11,6 @@ export const processEvent = async (eventType: string, payload: any) => {
     case 'user.created':
       await handleUserCreated(payload);
       break;
-    // Add more event handlers as needed
     default:
       logger.warn(`Unhandled event type: ${eventType}`);
   }
@@ -20,8 +19,11 @@ export const processEvent = async (eventType: string, payload: any) => {
 async function handleUserCreated(payload: any) {
   try {
     const userId = payload.data.id;
-    await addToQueue('user.api_key.created', { userId });
-    logger.info(`Added API key generation job to queue for user: ${userId}`);
+    const apiKey = await generateApiKey(userId);
+    logger.info(`Generated API key for user: ${userId}`);
+    // Here you would typically store the API key securely
+    // For this example, we'll just add it to the queue
+    await addToQueue('user.api_key.created', { userId, apiKey });
   } catch (error) {
     logger.error('Error handling user.created event:', error);
     throw error;

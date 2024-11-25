@@ -16,7 +16,7 @@ const port = process.env.PORT || 3000;
 app.use(express.json({
   verify: (req: any, res, buf) => {
     // Store raw body for signature verification
-    req.rawBody = buf;
+    req.rawBody = buf.toString();
   }
 }));
 app.use(rateLimiter);

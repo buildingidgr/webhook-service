@@ -4,10 +4,7 @@ import { processWebhook } from '../controllers/webhookController';
 
 const router = Router();
 
-router.post('/clerk',
-  validateWebhookSignature,
-  processWebhook
-);
+router.post('/clerk', validateWebhookSignature, processWebhook);
 
 export const webhookRouter = router;
 

@@ -4,7 +4,7 @@ import { webhookRouter } from './routes/webhook';
 import { errorHandler } from './middleware/errorHandler';
 import { createLogger } from './utils/logger';
 import { rateLimiter } from './middleware/rateLimiter';
-import { setupQueueConsumer, closeQueueConnection } from './services/queueService';
+// Removed: import { setupQueueConsumer } from './services/queueService';
 
 config(); // Load environment variables
 
@@ -33,7 +33,7 @@ app.use(errorHandler);
 // Start the server and queue consumer
 const startServer = async () => {
   try {
-    await setupQueueConsumer();
+    // Removed: await setupQueueConsumer();
     const server = app.listen(port, () => {
       logger.info(`Webhook service listening on port ${port}`);
     });
@@ -42,7 +42,7 @@ const startServer = async () => {
     const shutdown = async () => {
       logger.info('Shutting down gracefully...');
       server.close(async () => {
-        await closeQueueConnection();
+        await closeQueueConnection(); // Assumes closeQueueConnection is defined elsewhere
         process.exit(0);
       });
     };

@@ -1,16 +1,36 @@
-export async function addToQueue(eventType: string, data: any) {
+import amqp, { Channel, Connection } from 'amqplib';
+import { config } from '../config';
+import { createLogger } from '../utils/logger';
+import { processEvent } from './eventProcessor';
+
+const logger = createLogger('queue-service');
+
+let channel: Channel;
+let connection: Connection;
+
+async function getChannel(): Promise<Channel> {
+  if (!channel) {
+    connection = await amqp.connect(config.rabbitmqUrl);
+    channel = await connection.createChannel();
+    await channel.assertQueue(config.queueName, { durable: true });
+  }
+  return channel;
+}
+
+export async function addToQueue(eventType: string, data: any): Promise<boolean> {
   try {
     const ch = await getChannel();
     const message = JSON.stringify({ eventType, data });
     const result = ch.sendToQueue(config.queueName, Buffer.from(message), { persistent: true });
     logger.info(`Added to queue: ${eventType}, Result: ${result}`);
+    return result;
   } catch (error) {
     logger.error('Error adding to queue:', error);
     throw error;
   }
 }
 
-export async function setupQueueConsumer() {
+export async function setupQueueConsumer(): Promise<void> {
   try {
     const ch = await getChannel();
     const queueInfo = await ch.assertQueue(config.queueName, { durable: true });
@@ -33,6 +53,22 @@ export async function setupQueueConsumer() {
     logger.info('Queue consumer started');
   } catch (error) {
     logger.error('Error starting queue consumer:', error);
+    throw error;
+  }
+}
+
+// Graceful shutdown function
+export async function closeQueueConnection(): Promise<void> {
+  try {
+    if (channel) {
+      await channel.close();
+    }
+    if (connection) {
+      await connection.close();
+    }
+    logger.info('Queue connection closed');
+  } catch (error) {
+    logger.error('Error closing queue connection:', error);
     throw error;
   }
 }

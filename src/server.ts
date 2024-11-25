@@ -4,7 +4,7 @@ import { webhookRouter } from './routes/webhook';
 import { errorHandler } from './middleware/errorHandler';
 import { createLogger } from './utils/logger';
 import { rateLimiter } from './middleware/rateLimiter';
-import { setupQueueConsumer } from './services/queueService';
+import { setupQueueConsumer, closeQueueConnection } from './services/queueService';
 
 config(); // Load environment variables
 
@@ -34,9 +34,21 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await setupQueueConsumer();
-    app.listen(port, () => {
+    const server = app.listen(port, () => {
       logger.info(`Webhook service listening on port ${port}`);
     });
+
+    // Graceful shutdown
+    const shutdown = async () => {
+      logger.info('Shutting down gracefully...');
+      server.close(async () => {
+        await closeQueueConnection();
+        process.exit(0);
+      });
+    };
+
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);

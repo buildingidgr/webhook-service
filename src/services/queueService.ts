@@ -12,6 +12,7 @@ async function getChannel(): Promise<Channel> {
     connection = await amqp.connect(config.rabbitmqUrl);
     channel = await connection.createChannel();
     await channel.assertQueue(config.queueName, { durable: true });
+    await channel.assertQueue(config.opportunityQueueName, { durable: true });
   }
   return channel;
 }
@@ -20,8 +21,14 @@ export async function addToQueue(eventType: string, data: any): Promise<boolean>
   try {
     const ch = await getChannel();
     const message = Buffer.from(JSON.stringify({ eventType, data }));
-    const result = ch.sendToQueue(config.queueName, message, { persistent: true });
-    logger.info(`Added to queue: ${eventType}, Result: ${result}`);
+    let queueName = config.queueName;
+
+    if (eventType === 'opportunity.created') {
+      queueName = config.opportunityQueueName;
+    }
+
+    const result = ch.sendToQueue(queueName, message, { persistent: true });
+    logger.info(`Added to queue: ${queueName}, Event Type: ${eventType}, Result: ${result}`);
     logger.info(`Message content: ${JSON.stringify({ eventType, data })}`);
     return result;
   } catch (error) {
@@ -30,9 +37,9 @@ export async function addToQueue(eventType: string, data: any): Promise<boolean>
   }
 }
 
-async function getQueueSize(): Promise<number> {
+async function getQueueSize(queueName: string): Promise<number> {
   const ch = await getChannel();
-  const queueInfo = await ch.assertQueue(config.queueName, { durable: true });
+  const queueInfo = await ch.assertQueue(queueName, { durable: true });
   return queueInfo.messageCount;
 }
 

@@ -13,6 +13,18 @@ export const processEvent = async (eventType: string, payload: any) => {
     case 'opportunity.created':
       await handleOpportunityCreated(payload);
       break;
+    case 'session.created':
+      await handleSessionCreated(payload);
+      break;
+    case 'session.ended':
+      await handleSessionEnded(payload);
+      break;
+    case 'session.removed':
+      await handleSessionRemoved(payload);
+      break;
+    case 'session.revoked':
+      await handleSessionRevoked(payload);
+      break;
     default:
       logger.warn(`Unhandled event type: ${eventType}`);
   }
@@ -47,6 +59,58 @@ async function handleOpportunityCreated(payload: any) {
     logger.info(`Opportunity details: ${JSON.stringify(payload.data)}`);
   } catch (error) {
     logger.error('Error handling opportunity.created event:', error);
+    throw error;
+  }
+}
+
+async function handleSessionCreated(payload: any) {
+  try {
+    const { id: sessionId, user_id: userId, client_id: clientId } = payload.data;
+    const { user_agent: userAgent, client_ip: clientIp } = payload.event_attributes.http_request;
+
+    logger.info(`New session created: ${sessionId}`);
+    logger.info(`User: ${userId}, Client: ${clientId}`);
+    logger.info(`User Agent: ${userAgent}`);
+    logger.info(`Client IP: ${clientIp}`);
+  } catch (error) {
+    logger.error('Error handling session.created event:', error);
+    throw error;
+  }
+}
+
+async function handleSessionEnded(payload: any) {
+  try {
+    const { id: sessionId, user_id: userId, last_active_at } = payload.data;
+
+    logger.info(`Session ended: ${sessionId}`);
+    logger.info(`User: ${userId}`);
+    logger.info(`Last active at: ${new Date(last_active_at).toISOString()}`);
+  } catch (error) {
+    logger.error('Error handling session.ended event:', error);
+    throw error;
+  }
+}
+
+async function handleSessionRemoved(payload: any) {
+  try {
+    const { id: sessionId, user_id: userId } = payload.data;
+
+    logger.info(`Session removed: ${sessionId}`);
+    logger.info(`User: ${userId}`);
+  } catch (error) {
+    logger.error('Error handling session.removed event:', error);
+    throw error;
+  }
+}
+
+async function handleSessionRevoked(payload: any) {
+  try {
+    const { id: sessionId, user_id: userId, client_id: clientId } = payload.data;
+
+    logger.info(`Session revoked: ${sessionId}`);
+    logger.info(`User: ${userId}, Client: ${clientId}`);
+  } catch (error) {
+    logger.error('Error handling session.revoked event:', error);
     throw error;
   }
 }

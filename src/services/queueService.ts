@@ -13,6 +13,7 @@ async function getChannel(): Promise<Channel> {
     channel = await connection.createChannel();
     await channel.assertQueue(config.queueName, { durable: true });
     await channel.assertQueue(config.opportunityQueueName, { durable: true });
+    await channel.assertQueue(config.sessionQueueName, { durable: true });
   }
   return channel;
 }
@@ -25,6 +26,8 @@ export async function addToQueue(eventType: string, data: any): Promise<boolean>
 
     if (eventType === 'opportunity.created') {
       queueName = config.opportunityQueueName;
+    } else if (eventType.startsWith('session.')) {
+      queueName = config.sessionQueueName;
     }
 
     const result = ch.sendToQueue(queueName, message, { persistent: true });

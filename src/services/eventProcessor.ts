@@ -46,16 +46,21 @@ async function handleUserCreated(payload: any) {
 
 async function handleOpportunityCreated(payload: any) {
   try {
-    const opportunityId = payload.data.id;
-    const projectType = payload.data.projectType;
-    const clientName = payload.data.client.fullName;
+    const {
+      id,
+      projectType,
+      project,
+      contact,
+      metadata
+    } = payload.data;
     
-    logger.info(`New opportunity created: ${opportunityId}`);
+    logger.info(`New opportunity created: ${id}`);
     logger.info(`Project Type: ${projectType}`);
-    logger.info(`Client: ${clientName}`);
+    logger.info(`Client: ${contact.fullName}`);
+    logger.info(`Location: ${project.location.address}`);
+    logger.info(`Submitted At: ${metadata.submittedAt}`);
     
     // Here you would typically process the opportunity data
-    // For this example, we'll just log some information
     logger.info(`Opportunity details: ${JSON.stringify(payload.data)}`);
   } catch (error) {
     logger.error('Error handling opportunity.created event:', error);

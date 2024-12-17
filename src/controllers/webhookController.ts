@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { createLogger } from '../utils/logger';
 import { addToQueue } from '../services/queueService';
 import { OpportunityPayload } from '../types/opportunity';
+import crypto from 'crypto';
 
 const logger = createLogger('webhook-controller');
 
@@ -27,13 +28,15 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
     // Log the incoming request for debugging
     logger.info(`Received raw request body: ${JSON.stringify(req.body)}`);
     
-    // Extract the opportunity data, handling the case where it might be prefixed with "data:"
+    // Extract the opportunity data from the payload
+    const rawData = req.body.toString().replace('data: ', '');
     let opportunityData: OpportunityPayload;
-    if (typeof req.body === 'string' && req.body.startsWith('data:')) {
-      const jsonStr = req.body.replace('data:', '').trim();
-      opportunityData = JSON.parse(jsonStr);
-    } else {
-      opportunityData = req.body.data || req.body;
+    
+    try {
+      opportunityData = JSON.parse(rawData);
+    } catch {
+      // If parsing fails, try using the body directly
+      opportunityData = req.body;
     }
 
     if (!opportunityData || !opportunityData.project) {
@@ -43,17 +46,7 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
     // Transform the payload to match the queue message format
     const queuePayload = {
       type: 'opportunity.created',
-      data: {
-        id: crypto.randomUUID(),
-        projectType: opportunityData.project.category.title,
-        client: {
-          fullName: opportunityData.contact.fullName,
-          email: opportunityData.contact.email
-        },
-        project: opportunityData.project,
-        contact: opportunityData.contact,
-        metadata: opportunityData.metadata
-      }
+      data: opportunityData
     };
 
     logger.info(`Processed opportunity payload: ${JSON.stringify(queuePayload)}`);

@@ -24,14 +24,27 @@ export const processWebhook = async (req: Request, res: Response) => {
 
 export const processOpportunityWebhook = async (req: Request, res: Response) => {
   try {
-    // Handle both direct payload and nested data structure
-    const opportunityData = req.body.data || req.body as OpportunityPayload;
+    // Log the incoming request for debugging
+    logger.info(`Received raw request body: ${JSON.stringify(req.body)}`);
     
+    // Extract the opportunity data, handling the case where it might be prefixed with "data:"
+    let opportunityData: OpportunityPayload;
+    if (typeof req.body === 'string' && req.body.startsWith('data:')) {
+      const jsonStr = req.body.replace('data:', '').trim();
+      opportunityData = JSON.parse(jsonStr);
+    } else {
+      opportunityData = req.body.data || req.body;
+    }
+
+    if (!opportunityData || !opportunityData.project) {
+      throw new Error('Invalid payload structure');
+    }
+
     // Transform the payload to match the queue message format
     const queuePayload = {
       type: 'opportunity.created',
       data: {
-        id: crypto.randomUUID(), // Generate a unique ID
+        id: crypto.randomUUID(),
         projectType: opportunityData.project.category.title,
         client: {
           fullName: opportunityData.contact.fullName,
@@ -43,15 +56,18 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
       }
     };
 
-    logger.info(`Received opportunity webhook`);
-    logger.info(`Opportunity payload: ${JSON.stringify(queuePayload)}`);
+    logger.info(`Processed opportunity payload: ${JSON.stringify(queuePayload)}`);
     
     await addToQueue('opportunity.created', queuePayload);
     
     res.status(200).json({ status: 'queued' });
   } catch (error) {
     logger.error('Error processing opportunity webhook:', error);
-    res.status(500).json({ error: 'Failed to process opportunity webhook' });
+    logger.error('Request body:', JSON.stringify(req.body));
+    res.status(500).json({ 
+      error: 'Failed to process opportunity webhook',
+      details: error.message 
+    });
   }
 };
 

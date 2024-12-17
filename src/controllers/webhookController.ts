@@ -24,21 +24,22 @@ export const processWebhook = async (req: Request, res: Response) => {
 
 export const processOpportunityWebhook = async (req: Request, res: Response) => {
   try {
-    const payload = req.body as OpportunityPayload;
+    // Handle both direct payload and nested data structure
+    const opportunityData = req.body.data || req.body as OpportunityPayload;
     
     // Transform the payload to match the queue message format
     const queuePayload = {
       type: 'opportunity.created',
       data: {
         id: crypto.randomUUID(), // Generate a unique ID
-        projectType: payload.project.category.title,
+        projectType: opportunityData.project.category.title,
         client: {
-          fullName: payload.contact.fullName,
-          email: payload.contact.email
+          fullName: opportunityData.contact.fullName,
+          email: opportunityData.contact.email
         },
-        project: payload.project,
-        contact: payload.contact,
-        metadata: payload.metadata
+        project: opportunityData.project,
+        contact: opportunityData.contact,
+        metadata: opportunityData.metadata
       }
     };
 

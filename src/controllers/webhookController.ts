@@ -61,12 +61,12 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
     await addToQueue('opportunity.created', queuePayload);
     
     res.status(200).json({ status: 'queued' });
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Error processing opportunity webhook:', error);
     logger.error('Request body:', JSON.stringify(req.body));
     res.status(500).json({ 
       error: 'Failed to process opportunity webhook',
-      details: error.message 
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 };

@@ -29,17 +29,23 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
     logger.info(`Received raw request body: ${JSON.stringify(req.body)}`);
     
     // Extract the opportunity data from the payload
-    const rawData = req.body.toString().replace('data: ', '');
     let opportunityData: OpportunityPayload;
     
-    try {
-      opportunityData = JSON.parse(rawData);
-    } catch {
-      // If parsing fails, try using the body directly
+    if (typeof req.body === 'string') {
+      // Handle string payload (data: {...})
+      const jsonStr = req.body.replace(/^data:\s*/, '');
+      opportunityData = JSON.parse(jsonStr);
+    } else if (req.body.data) {
+      // Handle object payload with data property
+      opportunityData = req.body.data;
+    } else {
+      // Handle direct object payload
       opportunityData = req.body;
     }
 
-    if (!opportunityData || !opportunityData.project) {
+    // Validate the payload structure
+    if (!opportunityData?.project?.category?.title) {
+      logger.error('Invalid payload:', JSON.stringify(opportunityData));
       throw new Error('Invalid payload structure');
     }
 

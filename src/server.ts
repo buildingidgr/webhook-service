@@ -17,6 +17,7 @@ app.set('trust proxy', 1);
 
 // Middleware
 app.use(express.json({
+  limit: '10mb',
   verify: (req: any, res, buf) => {
     // Store raw body for signature verification
     req.rawBody = buf.toString();

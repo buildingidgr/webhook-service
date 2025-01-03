@@ -31,28 +31,30 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
     // Extract the opportunity data from the payload
     let opportunityData: OpportunityPayload;
     
-    if (typeof req.body === 'string') {
-      // Handle string payload (data: {...})
-      const jsonStr = req.body.replace(/^data:\s*/, '');
-      opportunityData = JSON.parse(jsonStr);
-    } else if (req.body.data) {
-      // Handle object payload with data property
-      opportunityData = req.body.data;
-    } else {
-      // Handle direct object payload
+    try {
+      // Parse the payload
       opportunityData = req.body;
+    } catch (parseError) {
+      logger.error('Failed to parse payload:', parseError);
+      throw new Error('Invalid JSON payload');
     }
 
     // Validate the payload structure
     if (!opportunityData?.project?.category?.title) {
-      logger.error('Invalid payload:', JSON.stringify(opportunityData));
+      logger.error('Invalid payload structure:', JSON.stringify(opportunityData));
       throw new Error('Invalid payload structure');
     }
 
     // Transform the payload to match the queue message format
     const queuePayload = {
       type: 'opportunity.created',
-      data: opportunityData
+      data: {
+        id: crypto.randomUUID(),
+        projectType: opportunityData.project.category.title,
+        project: opportunityData.project,
+        contact: opportunityData.contact,
+        metadata: opportunityData.metadata
+      }
     };
 
     logger.info(`Processed opportunity payload: ${JSON.stringify(queuePayload)}`);

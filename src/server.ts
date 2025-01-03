@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { config } from 'dotenv';
 import { webhookRouter } from './routes/webhook';
 import { errorHandler } from './middleware/errorHandler';
@@ -15,7 +16,17 @@ const port = process.env.PORT || 3000;
 // Trust proxy
 app.set('trust proxy', 1);
 
+// CORS configuration
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  methods: ['POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  maxAge: 86400 // 24 hours
+};
+
 // Middleware
+app.use(cors(corsOptions));
 app.use(express.json({
   limit: '10mb',
   verify: (req: any, res, buf) => {

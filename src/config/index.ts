@@ -7,5 +7,6 @@ export const config = {
   sessionQueueName: process.env.SESSION_QUEUE_NAME || 'session-events',
   rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW || '900000'),
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100'),
+  allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000']
 };
 

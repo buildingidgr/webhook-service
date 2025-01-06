@@ -31,12 +31,10 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
     // Extract the opportunity data from the payload
     let opportunityData: OpportunityPayload;
     
-    try {
-      // Parse the payload
+    if (req.body.data && req.body.type === 'opportunity.created') {
+      opportunityData = req.body.data;
+    } else {
       opportunityData = req.body;
-    } catch (parseError) {
-      logger.error('Failed to parse payload:', parseError);
-      throw new Error('Invalid JSON payload');
     }
 
     // Validate the payload structure

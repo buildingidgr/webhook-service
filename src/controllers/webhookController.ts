@@ -41,8 +41,6 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
     const queuePayload = {
       type: 'opportunity.created',
       data: {
-        id: crypto.randomUUID(),
-        projectType: opportunityData.project.category,
         project: {
           ...opportunityData.project,
           location: {
@@ -53,7 +51,8 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
             }
           }
         },
-        contact: opportunityData.contact
+        contact: opportunityData.contact,
+        metadata: opportunityData.metadata
       }
     };
 

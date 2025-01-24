@@ -3,25 +3,33 @@ export interface ProjectCategory {
   description: string;
 }
 
+export interface ParsedAddress {
+  streetNumber: string;
+  street: string;
+  city: string;
+  area: string;
+  country: string;
+  countryCode: string;
+  postalCode: string;
+}
+
 export interface Location {
   address: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  }
+  lat: number;
+  lng: number;
+  parsedAddress: ParsedAddress;
 }
 
 export interface ProjectDetails {
+  title: string;
   description: string;
 }
 
 export interface Contact {
   fullName: string;
   email: string;
-  phone: {
-    countryCode: string;
-    number: string;
-  }
+  phone: string;
+  countryCode: string;
 }
 
 export interface Metadata {
@@ -33,10 +41,9 @@ export interface Metadata {
 
 export interface OpportunityPayload {
   project: {
-    category: ProjectCategory;
+    category: string;
     location: Location;
     details: ProjectDetails;
   };
   contact: Contact;
-  metadata: Metadata;
 } 

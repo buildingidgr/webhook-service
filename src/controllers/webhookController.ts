@@ -29,16 +29,10 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
     logger.info(`Received raw request body: ${JSON.stringify(req.body)}`);
     
     // Extract the opportunity data from the payload
-    let opportunityData: OpportunityPayload;
-    
-    if (req.body.data && req.body.type === 'opportunity.created') {
-      opportunityData = req.body.data;
-    } else {
-      opportunityData = req.body;
-    }
+    const opportunityData: OpportunityPayload = req.body;
 
     // Validate the payload structure
-    if (!opportunityData?.project?.category?.title) {
+    if (!opportunityData?.project?.category) {
       logger.error('Invalid payload structure:', JSON.stringify(opportunityData));
       throw new Error('Invalid payload structure');
     }
@@ -48,10 +42,18 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
       type: 'opportunity.created',
       data: {
         id: crypto.randomUUID(),
-        projectType: opportunityData.project.category.title,
-        project: opportunityData.project,
-        contact: opportunityData.contact,
-        metadata: opportunityData.metadata
+        projectType: opportunityData.project.category,
+        project: {
+          ...opportunityData.project,
+          location: {
+            ...opportunityData.project.location,
+            coordinates: {
+              lat: opportunityData.project.location.lat,
+              lng: opportunityData.project.location.lng
+            }
+          }
+        },
+        contact: opportunityData.contact
       }
     };
 

@@ -46,4 +46,5 @@ export interface OpportunityPayload {
     details: ProjectDetails;
   };
   contact: Contact;
+  metadata: Metadata;
 } 

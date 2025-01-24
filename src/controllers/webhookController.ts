@@ -51,8 +51,7 @@ export const processOpportunityWebhook = async (req: Request, res: Response) => 
             }
           }
         },
-        contact: opportunityData.contact,
-        metadata: opportunityData.metadata
+        contact: opportunityData.contact
       }
     };
 

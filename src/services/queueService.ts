@@ -1,18 +1,29 @@
-import amqp, { Channel, Connection } from 'amqplib';
+import amqp from 'amqplib/callback_api';
 import { config } from '../config';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('queue-service');
 
-let channel: Channel;
-let connection: Connection;
+let channel: amqp.Channel;
+let connection: amqp.Connection;
 
 const OPPORTUNITY_EXCHANGE = 'opportunity.events';
 
-async function getChannel(): Promise<Channel> {
+async function getChannel(): Promise<amqp.Channel> {
   if (!channel) {
-    connection = await amqp.connect(config.rabbitmqUrl);
-    channel = await connection.createChannel();
+    connection = await new Promise<amqp.Connection>((resolve, reject) => {
+      amqp.connect(config.rabbitmqUrl, (err, conn) => {
+        if (err) reject(err);
+        else resolve(conn);
+      });
+    });
+
+    channel = await new Promise<amqp.Channel>((resolve, reject) => {
+      connection.createChannel((err, ch) => {
+        if (err) reject(err);
+        else resolve(ch);
+      });
+    });
     
     // Assert existing queues for backward compatibility
     await channel.assertQueue(config.queueName, { durable: true });
@@ -69,17 +80,31 @@ export async function bindOpportunityQueue(queueName: string, routingPattern: st
 
 async function getQueueSize(queueName: string): Promise<number> {
   const ch = await getChannel();
-  const queueInfo = await ch.assertQueue(queueName, { durable: true });
-  return queueInfo.messageCount;
+  return new Promise<number>((resolve, reject) => {
+    ch.assertQueue(queueName, { durable: true }, (err, ok) => {
+      if (err) reject(err);
+      else resolve(ok.messageCount);
+    });
+  });
 }
 
 export async function closeQueueConnection(): Promise<void> {
   try {
     if (channel) {
-      await channel.close();
+      await new Promise<void>((resolve, reject) => {
+        channel.close((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
     }
     if (connection) {
-      await connection.close();
+      await new Promise<void>((resolve, reject) => {
+        connection.close((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
     }
     logger.info('Queue connection closed');
   } catch (error) {

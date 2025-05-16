@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.webhookRouter = void 0;
+const express_1 = require("express");
+const signatureValidator_1 = require("../middleware/signatureValidator");
+const webhookController_1 = require("../controllers/webhookController");
+const router = (0, express_1.Router)();
+router.post('/clerk', signatureValidator_1.validateWebhookSignature, webhookController_1.processWebhook);
+router.post('/opportunity', webhookController_1.processOpportunityWebhook);
+exports.webhookRouter = router;
